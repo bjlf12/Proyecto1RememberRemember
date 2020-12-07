@@ -49,8 +49,6 @@ void unset_scheduler_timer();
 // Función para comprobar el estado de los threads y llamar al scheduler de tiempo real para obtener el siguiente
 // thread a ejecutar.
 void schedule();
-// Función que indica si existe algún thread que no ha iniciado en el programa.
-int has_not_started(tcb *tcb_head);
 // Función que se encarga de manejar las interrupciones de tiempo.
 void timer_interrupt(int j, siginfo_t *si, void *old_context);
 // Función para configurar los signals utilizados por las alarmas.
