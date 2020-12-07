@@ -15,8 +15,8 @@ al momento de la creación de este. El orden de ejecución de estos hilos será 
 #include <stdlib.h>
 #include <sys/time.h>
 
-ListMonitors *pmonitors;
-Scene *pscene;
+ListMonitors *pmonitors;    // Lista de monitores que se utilizarán para mostrar la explosión de las figuras.
+Scene *pscene;              // Canvas que se utilizará para llamar a la función de la explosión.
 
 // Cola de hilos que han finalizado con su ejecución.
 dead_threads *dthreads_head;
@@ -28,8 +28,6 @@ tcb *tcb_tail;
 mythread *main_thread;              // Hilo principal enlazado a todos los demás hilos.
 mythread *current;                  // Puntero al hilo que se encontrará en ejecución en todo momento del programa.
 
-//unlock
-//imprimir_explosion
 void (*explosion_function)(ListMonitors *monitors, ListFigures *figure, Scene *scene);
 //void (*explosion_function) (int);   // Puntero a la función con la capacidad de mostrar la animación de una explosión.
 Scene *animator_scene;              // Puntero al canvas
@@ -40,7 +38,7 @@ struct sigevent thread_sigevent = { .sigev_notify = SIGEV_SIGNAL, .sigev_signo =
 struct itimerspec scheduler_itimer; // Variable de tiempo donde se guardará el quantum a utilizar en el programa.
 timer_t scheduler_timer_id;         // Identificador de las interrupciones de tiempo generadas por el scheduler.
 ucontext_t scheduler_context;       // Contexto del scheduler al que será cambiado cada vez que se tenga que decidir
-// por un nuevo thread a ejecutar.
+                                    // por un nuevo thread a ejecutar.
 
 int threads_counter;                // Contador de threads que permitirá darle un identificador único a cada thread.
 int total_tickets;                  // Variable que representa al total de tickets presentes en los hilos.
@@ -50,12 +48,12 @@ int total_tickets;                  // Variable que representa al total de ticke
 void enqueue(tcb **tcb_head, tcb **tcb_tail, mythread *new_mythread) {
     tcb *new_tcb = (tcb *)malloc(sizeof(tcb));  // Se solicita espacio para el nuevo nodo.
     new_tcb->thread = new_mythread;             // Se le indica al nuevo nodo que almacene al thread pasado por
-    // parámetro.
+                                                // parámetro.
     new_tcb->next = NULL;                       // Se le indica que el siguiente elemento será vacío.
     if(*tcb_tail == NULL) *tcb_head = new_tcb;  // Si el elemento final de la cola es vacío significa que toda la
-        // cola está vacía, por lo que se coloca al nuevo thread en la cabeza.
+                                                // cola está vacía, por lo que se coloca al nuevo thread en la cabeza.
     else (*tcb_tail)->next = new_tcb;           // De otra manera se le indica al elemento final de la cola que apunte
-    // al nuevo nodo.
+                                                // al nuevo nodo.
     *tcb_tail = new_tcb;                        // El nuevo nodo será el elemento final de la cola.
 }
 
@@ -67,7 +65,7 @@ mythread *dequeue(tcb **tcb_head, tcb **tcb_tail) {
     tcb *temp = *tcb_head;                      // Se crea un puntero que apunte a la cabeza actual de la cola.
     *tcb_head = (*tcb_head)->next;              // Se le indica a la cola que apunte a su siguiente elemento.
     if(*tcb_head == NULL) *tcb_tail = NULL;     // Si ahora la cabeza es nula significa que solo había un thread
-    // en la cola, por lo que ahora el final de la cola también es nulo.
+                                                // en la cola, por lo que ahora el final de la cola también es nulo.
     free(temp);                                 // Se libera el espacio del nodo que almacenaba el thread.
     return result;                              // Se retorna el thread.
 }
@@ -77,11 +75,11 @@ mythread *dequeue(tcb **tcb_head, tcb **tcb_tail) {
 mythread *search_thread(threads_queue *threads_q, mythread_t thread_id) {
     while(threads_q != NULL) {              // Se itera buscando hasta que el puntero de la cola sea nulo.
         if(threads_q->thread->mythread_id == thread_id) return threads_q->thread;   // Si se encuentra el thread
-        // buscado, se retorna.
+                                                                                    // buscado, se retorna.
         threads_q = threads_q->next;        // Si no, se continua buscando.
     }
     return NULL;                            // Si no se encuentra ningún nodo que coincida con el identificador
-    // brindado, se retorna nulo.
+                                            // brindado, se retorna nulo.
 }
 
 // Función para buscar un thread en una cola y retirarlo de la misma. La búsqueda es realizada por el identificador
@@ -115,7 +113,7 @@ mythread *pop_thread(tcb **tcb_head, tcb **tcb_tail, mythread_t thread_id) {
             return result;                  // Se retorna en thread buscado.
         }
         temp = temp->next;      // Si el thread buscado no se encuentra en el nodo actual, se apunta al
-        // siguiente thread.
+                                // siguiente thread.
     }
     return NULL;                // Si no se encuentre el nodo se retorna nulo.
 }
@@ -151,7 +149,7 @@ mythread *pop_thread_by_timerid(tcb **tcb_head, tcb **tcb_tail, timer_t timerid)
             return result;                  // Se retorna en thread buscado.
         }
         temp = temp->next;      // Si el thread buscado no se encuentra en el nodo actual, se apunta al
-        // siguiente thread.
+                                // siguiente thread.
     }
     return NULL;                // Si no se encuentre el nodo se retorna nulo.
 }
@@ -159,12 +157,10 @@ mythread *pop_thread_by_timerid(tcb **tcb_head, tcb **tcb_tail, timer_t timerid)
 // Función para realizar la explosión del thread actual.
 void explote_current() {
     waiting_threads *to_free, *temp = current->w_threads_head;  // Punteros para realizar las operaciones de liberar
-    // a los threads esperando.
+                                                                // a los threads esperando.
     while (temp != NULL) {                          // Iteramos sobre los threads esperando.
-        if(temp->thread->blocked) {
-            total_tickets += temp->thread->tickets;     // Se aumentan el total de tickets.
-            temp->thread->blocked = 0;                  // Se desbloquea el thread.
-        }
+        total_tickets += temp->thread->tickets;     // Se aumentan el total de tickets.
+        temp->thread->blocked = 0;                  // Se desbloquea el thread.
         to_free = temp;
         temp = temp->next;                          // Pasamos al siguiente.
         free(to_free);                              // Se libera la estructura actual.
@@ -177,8 +173,8 @@ void explote_current() {
         enqueue(&dthreads_head, &dthreads_tail, current);   // Se inserta en la cola.
     }
     total_tickets -= current->tickets;      // Se le resta al total de tickets los que poseía.
-    current->exploded = 1;                  // Se marca el thread como explotado. TODO
-    current->completed = 1;                 // Marcamos el thread como finalizado. TODO
+    current->exploded = 1;                  // Se marca el thread como explotado.
+    current->completed = 1;                 // Marcamos el thread como finalizado.
 
     unset_scheduler_timer();                                        // Se remueve la alarma del scheduler.
     swapcontext(&current->mythread_context, &scheduler_context);    // Se cambia al contexto del scheduler.
@@ -188,7 +184,7 @@ void explote_current() {
 void explote_thread(mythread **exploded_thread) {
 
     waiting_threads *to_free, *temp = (*exploded_thread)->w_threads_head;   // Punteros para realizar las operaciones de liberar
-    // a los threads esperando.
+                                                                            // a los threads esperando.
     while (temp != NULL) {                          // Iteramos sobre los threads esperando.
         total_tickets += temp->thread->tickets;     // Se aumentan el total de tickets.
         temp->thread->blocked = 0;                  // Se desbloquea el thread.
@@ -208,7 +204,7 @@ void explote_thread(mythread **exploded_thread) {
         free(*exploded_thread);
         (*exploded_thread) = NULL;
     }
-    (*exploded_thread)->exploded = 1;       // TODO revisar esto, no se cae?
+    (*exploded_thread)->exploded = 1;
     (*exploded_thread)->completed = 1;
 }
 
@@ -238,9 +234,7 @@ void unset_scheduler_timer() {
 // Función para comprobar el estado de los threads y llamar al scheduler de tiempo real para obtener el siguiente
 // thread a ejecutar.
 void schedule() {
-    printf("TotalTick: %d", total_tickets);
     PRINTEXECINFO("Saliendo del thread: %d\n", current->mythread_id);
-    schedule_again:
 
     if(tcb_head == NULL) {      // Se comprueba si la cola de threads está vacía.
         PRINTEXECINFO("Entrando al thread %d\n", current->mythread_id);
@@ -257,23 +251,9 @@ void schedule() {
     mythread *temp_current;
     if(current->completed) {    // Si el thread actual ya ha finalizado.
         if(current->detached) temp_current = current;   // Se apunta con un thread temporal al actual.
-        temp_current = real_time(&tcb_head, &tcb_tail);      // Se busca el siguiente thread a ejecutar.
-        //free(temp_current);     // Se libera el actual si se encontraba desenlazado. TODO
-        if(temp_current == NULL) {   // Si no se puede ejecutar ningún thread se le indica al usuario y se termina la
-            //set_scheduler_timer();
-            if(has_not_started(tcb_head)) {
-                pause();
-                goto schedule_again;
-            }
-            PRINTINFO("La ejecución del programa ha finalizado\n");           // ejecución del programa.
-            exit(0);
-        }
-        if(temp_current == current) {
-            //set_scheduler_timer();
-            if(has_not_started(tcb_head)) {
-                pause();
-                goto schedule_again;
-            }
+        current = real_time(&tcb_head, &tcb_tail);      // Se busca el siguiente thread a ejecutar.
+        //free(temp_current);     // Se libera el actual si se encontraba desenlazado.
+        if(current == NULL) {   // Si no se puede ejecutar ningún thread se le indica al usuario y se termina la
             PRINTINFO("La ejecución del programa ha finalizado\n");           // ejecución del programa.
             exit(0);
         }
@@ -281,35 +261,16 @@ void schedule() {
     else {
         temp_current = real_time(&tcb_head, &tcb_tail); // Se busca el siguiente thread a ejecutar.
         if(temp_current == NULL) {                      // Si no se puede continuar con nigún thread de la cola.
-            printf("%d", total_tickets);
-            printf("%d, %d, %d\n", current->mythread_id, current->blocked, current->exploded);
             if(current->blocked) {                      // Si el thread actual se encuentra bloqueado.
-                if(has_not_started(tcb_head)) {
-                    pause();
-                    goto schedule_again;
-                }
                 PRINTINFO("No se puede continuar con ningún thread\n"); // Se le indica al usuario que no se puede
                 exit(0);                                            // continuar con ningún thread.
-            }//TODO comprobar
-            /*PRINTEXECINFO("Entrando al thread %d\n", current->mythread_id);  // Si se puede continuar con el actual.
-            set_scheduler_timer();                      // Se reinicia el quantum para los threads.
-            setcontext(&current->mythread_context);     // Se cambia al contexto del actual.
-            return;*/
+            }
         }
         else if (temp_current == current) {             // Si el thread a ejecutar resultó ser el mismo thread actual.
-            printf("%d, %d, %d\n", current->mythread_id, current->blocked, current->exploded);
             if(current->blocked) {                      // Se pregunta si se encuentra bloqueado.
-                if(has_not_started(tcb_head)) {
-                    pause();
-                    goto schedule_again;
-                }
                 PRINTINFO("No se puede continuar con ningún thread\n");  // Se le indica al usuario que no se puede
                 exit(0);                                            // continuar con ningún thread.
             }
-            /*PRINTEXECINFO("Entrando al thread %d\n", current->mythread_id);
-            set_scheduler_timer();                      // Se reinicia el quantum para los threads.
-            setcontext(&current->mythread_context);     // Se cambia al contexto del actual.
-            return;*/
         }
         else {                                          // Si se llega aquí el thread calculado se puede ejecutar.
             enqueue(&tcb_head, &tcb_tail, current);         // Colocamos al antiguo thread actual en la cola de threads.
@@ -342,7 +303,6 @@ void timer_interrupt(int j, siginfo_t *si, void *old_context) {
             // Se configura la alarma para cuando tenga que finalizar.
             setup_timer(current->finish_time/1000, ((long)current->finish_time%1000)*1000000, &(current->timer_id));
             current->started = 1;   // Se marca como iniciado y no bloqueado.
-            total_tickets += current->tickets;
             current->blocked = 0;
         }
         else {      // Si ya se había iniciado significa que era una interrupción para explotar.
@@ -361,24 +321,13 @@ void timer_interrupt(int j, siginfo_t *si, void *old_context) {
             // Se configura la alarma para cuando tenga que finalizar.
             setup_timer(temp->finish_time/1000, ((long)temp->finish_time%1000)*1000000, &(temp->timer_id));
             temp->started = 1;   // Se marca como iniciado y no bloqueado.
-            total_tickets += temp->tickets;
             temp->blocked = 0;
             enqueue(&tcb_head, &tcb_tail, temp);    // Se retorna a la cola el hilo.
-
-            /*if(!current->mythread_id) {
-
-                swapcontext(&current->mythread_context, &scheduler_context);    // Se cambia al contexto del scheduler.
-            }
-
-            if(setcontext(&scheduler_context) == -1) {      // Se cambia al contexto del thread actual.
-                PRINTERR("Error al cambiar de contexto\n");
-                exit(1);
-            }*/
         }
         else {          // Si ya había iniciado se explota.
             PRINTEXECINFO("Ha explotado el hilo: %d\n", temp->mythread_id);
             explosion_function(pmonitors, temp->figure, pscene);
-            explote_thread(&temp); //TODO revisar
+            explote_thread(&temp);
         }
     }
 }
@@ -409,7 +358,7 @@ void setup_timer(int seconds, long nanoseconds, timer_t *timer_id) {
 // a los hilos.
 void mythread_init(int new_quantum, void (*unlockNPrint)(Arguments *arguments), ListMonitors *monitors, Scene *scene) {
     signal(SIGINT, sigint_handler);     // Se le indica al programa que si sucede una interrupción para terminar el proceso
-    // con "Cntrl + C", ejecute la función sigint_handler.
+                                        // con "Cntrl + C", ejecute la función sigint_handler.
     explosion_function = unlockNPrint;
     pmonitors = monitors;
     pscene = scene;
@@ -508,21 +457,19 @@ int mythread_create(mythread_t *newthread_id, void (*thread_function)(), void *a
     temp->detached = 0;
     temp->figure = new_figure;
 
-    //total_tickets += tickets;
+    total_tickets += tickets;
 
     if(start_time_mseconds==0) {    // Si el tiempo de inicio del thread es 0.
         temp->blocked = 0;          // Se marca como desbloqueado.
-        total_tickets += temp->tickets;
         temp->started = 1;          // Se marca como iniciado.
         // Se crea la alarma para cuando tenga que explotar.
-        setup_timer(finish_time_mseconds / 1000, ((long)finish_time_mseconds % 1000)*1000000, &(temp->timer_id)); //TODO probar esto
+        setup_timer(finish_time_mseconds / 1000, ((long)finish_time_mseconds % 1000)*1000000, &(temp->timer_id));
     }
     else {                          // Si el tiempo de inicio no es 0.
         temp->blocked = 1;          // Se marca al thread como bloqueado.
-        //total_tickets += temp->tickets;
         temp->started = 0;          // Se indica que el hilo no ha iniciado.
         // Se crea la alarma para cuando tenga que iniciar.
-        setup_timer(start_time_mseconds / 1000, ((long)start_time_mseconds % 1000)*1000000, &(temp->timer_id)); //TODO probar esto
+        setup_timer(start_time_mseconds / 1000, ((long)start_time_mseconds % 1000)*1000000, &(temp->timer_id));
     }
 
     // Se crea el contexto del nuevo hilo.
@@ -538,7 +485,7 @@ int mythread_create(mythread_t *newthread_id, void (*thread_function)(), void *a
 void mythread_end(void *retval) {
 
     waiting_threads *to_free, *temp = current->w_threads_head;  // Punteros para realizar las operaciones de liberar
-    // a los threads esperando.
+                                                                // a los threads esperando.
     while (temp != NULL) {                          // Iteramos sobre los threads esperando.
         total_tickets += temp->thread->tickets;     // Se aumentan el total de tickets.
         temp->thread->blocked = 0;                  // Se desbloquea el thread.
@@ -552,11 +499,11 @@ void mythread_end(void *retval) {
     if (!current->detached) {               // Si el nodo actual no está desenlazado.
         current->return_value = retval;     // Se guarda el valor de retorno en un espacio del thread.
         enqueue(&dthreads_head, &dthreads_tail, current);   // Se almacena el thread en la cola de muertos.
-    }//TODO else un if current NULL en schedule
+    }
 
     total_tickets -= current->tickets;      // Se resta la cantidad de tiquetes del hilo a la actual.
     current->completed = 1;                 // Se marca al hilo como completado.
-    printf("Final de thread\n");
+
     unset_scheduler_timer();                                        // Se remueve la alarma del scheduler.
     swapcontext(&current->mythread_context, &scheduler_context);    // Se cambia al contexto del scheduler.
 }
@@ -575,14 +522,14 @@ int mythread_join(mythread_t thread_id, void **retval) {
     mythread *temp = search_thread(tcb_head, thread_id);    // Se busca el hilo en la cola de threads listos.
     if(temp != NULL) {                                      // Si se encuentra ahí.
         enqueue(&(temp->w_threads_head), &(temp->w_threads_tail), current); // Se almacena al hilo actual en la cola
-        // de threads esperando del hilo encontrado.
+                                                                            // de threads esperando del hilo encontrado.
         total_tickets -= current->tickets;                  // Se resta la cantidad de hilos del actual al total.
         current->blocked = 1;                               // Se marca el actual como bloqueado.
 
         unset_scheduler_timer();                                        // Se remueve la alarma del scheduler.
         swapcontext(&current->mythread_context, &scheduler_context);    // Se cambia al contexto del scheduler.
         *retval = temp->return_value;                                   // Una vez se vuelva a ejecutar es posible
-        // obtener el resultado del hilo que se deseaba.
+                                                                        // obtener el resultado del hilo que se deseaba.
         return 0;
     }
 
@@ -598,7 +545,7 @@ int mythread_join(mythread_t thread_id, void **retval) {
 int mythread_detach(mythread_t thread_id) {
 
     mythread *temp = search_thread(tcb_head, thread_id);    // Se busca al hilo que se desea desenlazar en la cola de
-    // threads listos.
+                                                            // threads listos.
     if(temp != NULL) {          // Si se encuentra.
         temp->detached = 1;     // Se marca al hilo como detached.
         return 0;
@@ -607,7 +554,7 @@ int mythread_detach(mythread_t thread_id) {
     temp = search_thread(dthreads_head, thread_id);         // Se busca en los hilos muertos.
     if(temp != NULL) {          // Si se encuentra.
 
-        free(temp->w_threads_head); // Se libera la cola de threads esperando. TODO funca?
+        free(temp->w_threads_head); // Se libera la cola de threads esperando.
         free(temp->w_threads_tail);
         free(temp->return_value);   // Se libera el valor de retorno del hilo.
         free(temp);
@@ -621,19 +568,19 @@ int mythread_detach(mythread_t thread_id) {
 // a un hilo para que sea capaz de finalizar correctamente.
 void mythread_chsched(mythread *thread, int priority, int current_total_tickets) {
     int new_sum;
-    thread->is_round_robin = 0;     // Se cambia el scheduler del hilo al de sorteo.
-    if(priority == 1) {             // Si la prioridad es de nivel 1.
+    thread->is_round_robin = 0;         // Se cambia el scheduler del hilo al de sorteo.
+    if(priority == 1) {                 // Si la prioridad es de nivel 1.
         if(current_total_tickets) {     // Si hay al menos un ticket en el total de tickets.
             new_sum = (current_total_tickets / 4) + (current_total_tickets % 4);    // Se calcula la cantidad a sumar.
-            thread->tickets += new_sum;                     // Se le aumenta la cantidad de tickets en un cuarto del total.
-            total_tickets += new_sum;     // La operación anterior se ve reflejada en el total de tickets.
+            thread->tickets += new_sum;                 // Se le aumenta la cantidad de tickets en un cuarto del total.
+            total_tickets += new_sum;   // La operación anterior se ve reflejada en el total de tickets.
         }
         else {                          // Si no hay tickets en el total.
             thread->tickets = 10;       // Se le asigna al thread 10 tickets.
             total_tickets = 10;         // La operación anterior se ve reflejada en el total de tickets.
         }
     }
-    else if(priority == 2) {        // Si la prioridad es de nivel 2.
+    else if(priority == 2) {            // Si la prioridad es de nivel 2.
         if(current_total_tickets) {     // Si hay al menos un ticket en el total de tickets.
             new_sum = (current_total_tickets / 3) + (current_total_tickets % 3);    // Se calcula la cantidad a sumar.
             thread->tickets += new_sum;         // Se le aumenta la cantidad de tickets en un tercio del total.
@@ -644,8 +591,8 @@ void mythread_chsched(mythread *thread, int priority, int current_total_tickets)
             total_tickets = 10;         // La operación anterior se ve reflejada en el total de tickets.
         }
     }
-    else {                  // Si la prioridad es de nivel 3.
-        if(current_total_tickets) { // Si hay al menos un ticket en el total de tickets.
+    else {                              // Si la prioridad es de nivel 3.
+        if(current_total_tickets) {     // Si hay al menos un ticket en el total de tickets.
             new_sum = (current_total_tickets / 2) + (current_total_tickets % 2);    // Se calcula la cantidad a sumar.
             thread->tickets += new_sum;         // Se le aumenta la cantidad de tickets en la mitad de la cantidad total.
             total_tickets += new_sum;           // La operación anterior se ve reflejada en el total de tickets.
@@ -699,16 +646,7 @@ void sigint_handler(int signo) {
 
     // Se libera la memoria utilizada por el thread actual.
     free(current->return_value),
-            free(current->w_threads_head);
+    free(current->w_threads_head);
     free(current->w_threads_tail);
     current = NULL;
-}
-
-// Función que indica si existe algún thread que no ha iniciado en el programa.
-int has_not_started(tcb *tcb_head) {
-    while(tcb_head != NULL) {
-        if(!tcb_head->thread->started) return 1;
-        tcb_head = tcb_head->next;
-    }
-    return 0;
 }
