@@ -1,0 +1,8 @@
+createFigure triangle 0 110 270 5 40 30 290 30 240
+createFigure triangle 1 90 0 50 8 140 8 165
+createFigure square 1 0 5 200 8 20 8 5
+createFigure square 0 100 90 5 100 30 30 20 5
+createFigure square 0 20 90 5 100 12 17 25 5
+createFigure triangle 0 100 270 4 100 12 165 8 158
+createFigure rombo 1 180 3 600 5 30 5 190
+createFigure rombo 1 180 3 600 355 30 35 190
