@@ -48,9 +48,9 @@ int mymutex_destroy(mythread_mutex_t **mymutex) {
 // Método para marcar como bloqueado un mutex. El primer hilo en solicitarlo es el que mantendrá bloqueado el mutex
 // hasta que termine de realizar sus operaciones y llame a mymutex_unlock. En caso de que el hilo intente bloquear un
 // mutex ya bloqueado este hilo será bloqueado hasta que el mutex vuelva a estar libre.
-int mymutex_lock(mythread_mutex_t **mymutex) { //(*mymutex)->thread != NULL && !(*mymutex)->thread->exploded
+int mymutex_lock(mythread_mutex_t **mymutex) {
     try_again:                                  // Etiqueta para regresar a comprobar si el mutex se encuentre bloqueado.
-    if((*mymutex)->locked) {                // Se pregunta si el mutex se encuentra bloqueado.
+    if((*mymutex)->thread != NULL && !(*mymutex)->thread->exploded) {                // Se pregunta si el mutex se encuentra bloqueado.
         enqueue(&((*mymutex)->waiting_head), &((*mymutex)->waiting_tail), current); // Si está bloqueado se inserta al
                                                                                     // thread que intentó hacer el lock
                                                                                     // en la lista de bloqueados del mutex.
@@ -94,8 +94,8 @@ int mymutex_unlock(mythread_mutex_t **mymutex) {
 // Función para intentar bloquear a un mutex. Si el mutex no se encuentra bloqueado este es bloqueado y el hilo que
 // realizó la llamada puede avanzar. Si el mutex no estaba libre se retorna 1 y el thread puede continuar para realizar
 // otra acción.
-int mymutex_trylock(mythread_mutex_t **mymutex) { //(*mymutex)->thread != NULL && !(*mymutex)->thread->exploded
-    if((*mymutex)->locked) return 1;    // Si el mutex se encuentra bloqueado se
+int mymutex_trylock(mythread_mutex_t **mymutex) {
+    if((*mymutex)->thread != NULL && !(*mymutex)->thread->exploded) return 1;    // Si el mutex se encuentra bloqueado se
                                                                                 // retorna 1.
     (*mymutex)->locked = 1;                 // Si no se marca al mutex como bloqueado.
     (*mymutex)->thread = current;           // Se apunta como dueño del mutex al thread que logró bloquearlo.
