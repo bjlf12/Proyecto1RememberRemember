@@ -1,9 +1,7 @@
 
 CC=gcc
 
-all: mythread
-
-prueba: animator
+all: animator
 
 #prelib: mythread.o
 
@@ -46,7 +44,7 @@ Server.o: Server.c Server.h
 	#$(CC) -o $@ $^ -L. -lmythread -lrt
 
 clean:
-	rm *.o *.so mythread
+	rm *.o *.gch mythread
 
 animator: Server.c mymutex.o scheduler.o Figure.o Parser.o Client.o Scene.o mythread.o
 	$(CC) -o $@ $^ -lrt
