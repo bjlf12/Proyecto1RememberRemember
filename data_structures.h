@@ -41,24 +41,22 @@ typedef threads_queue waiting_threads;  // Cola de nodos esperando a ser desbloq
 typedef threads_queue dead_threads;     // Cola de nodos que han finalizado su ejecución.
 
 typedef struct ListFigures{
-    int id;
-    char *ascii;
-    //file
-    char *type;
-    int scheduler;
-    int tickets;
-    int rotation;
-    int startX;
-    int startY;
-    int endX;
-    int endY;
-    int startTime;
-    int finishTime;
-    //file
-    int isLive;
-    int moves;
-    int **nextMoves; //struct ListPar nextPositions;
-    struct ListFigures *next;
+    int id; // Un id que se le asigna a cada figura.
+    char *ascii; // ASCII Arts que se encuentra en un archivo con el nombre de la figura de divenciones 5x5.
+    char *type; // Tipo de figura, ejemplo: cuadrado, triangulo...
+    int scheduler; // 0 para sorteo y un 1 para Round Robin.
+    int tickets; // Cantidad de tiquetes 0 si es Round Robin, sino varia segun lo pasado por el usuario.
+    int rotation; // Rotación de 0, 90, 180, 270 que deba realizar el ASCII art.
+    int startX; // Valor X de la posición inicial.
+    int startY; // Valor Y de la posición inicial.
+    int endX; // Valor X de la posición final.
+    int endY; // Valor Y de la posición final.
+    int startTime; // Cantidad de segundos de la hora de inicio.
+    int finishTime; // Tiempo de finalización de la figura.
+    int isLive; // 1 Si la figura esta activa, 0 lo contrario.
+    int moves; // Cantidad de movimientos que tiene una figura en su posición actual.
+    int **nextMoves; // Matriz del tamaño de la cantidad de movimientos posibles, almacena las coordenadas del movimiento.
+    struct ListFigures *next; // Puntero al siguiente elemento.
 }ListFigures;
 
 struct mythread {                   // Estructura que simboliza a los hilos en el programa.
@@ -97,41 +95,42 @@ struct threads_queue {      // Cola de nodos utilizada para almacenar los hilos.
 typedef struct mythread_mutex_t mythread_mutex_t;   // Estructura que representa a los mutex del sistema.
 
 struct  mythread_mutex_t {
-    int locked;
-    mythread *thread;
-    waiting_threads *waiting_head;
+    int locked;                // Entero que indica si el mutex se encuentra bloqueado o no. Si se encuentra con el valor 0
+    // estará libre y si es de valor 1 estará bloqueado por un hilo.
+    mythread *thread;            // Puntero al hilo que se encuentra en el momento asociado al mutex.
+    waiting_threads *waiting_head;    // Cola donde se encontrarán los hilos que se encuentran esperando a que se desbloque el mutex.
     waiting_threads *waiting_tail;
 };
 
 typedef struct Arguments{
-    void *figures;
-    void *clients;
-    void *scene;
+    void *figures; // Lista de figuras.
+    void *clients; // Lista de monitores.
+    void *scene; // Escenario en que se realiza la animación.
 } Arguments;
 
 typedef struct Scene{
-    int length;
-    int width;
-    int len;
-    struct Field *field;
+    int length; // Largo del escenario
+    int width; // Ancho del escenario
+    int len; // Largo de la lista de campos
+    struct Field *field; // Lista de campos
 } Scene;
 
 typedef struct Field{
-    int x;
-    int y;
-    int isLocked;
-    struct Field *next;
+    int x; // Múmero de fila
+    int y; // Múmero de columna
+    int isLocked; // Si la casilla esta bloqueada 1 sino 0
+    struct Field *next; // Puntero al siguiente elemento
 }Field;
 
 typedef struct ListMonitors{
-    int id;
-    int x1;
-    int y1;
-    int x2;
-    int y2;
-    int length;
-    int width;
-    int client;
+    int id; // Id unico del monitor
+    int x1; // Valor X del punto inicial
+    int y1; // Valor Y del punto inicial
+    int x2; // Valor X del punto final
+    int y2; // Valor Y del punto final
+    int length; // Largo del monitor
+    int width; // Ancho del monitor
+    int client; // Valor del socket de la conexión del cliente
     struct ListMonitors *next;
 }ListMonitors;
 
